@@ -14,6 +14,8 @@ kb_dir = "C:/Users/Sofie/Documents/data/spacy_test_CLI_KB/"
 training_dir = Path("C:/Users/Sofie/Documents/data/spacy_eval_train/")
 output_file = Path("./training_100.jsonl")
 
+annotations_file = Path("./annotations_eval-wp-3_5sept2019.jsonl")
+
 
 def write():
     nlp = spacy.load(Path(kb_dir) / "nlp")
@@ -75,7 +77,7 @@ def write():
 def read():
     with output_file.open("r", encoding="utf8") as json_file:
         json_list = list(json_file)
-        print("read", len(json_list))
+        print("read", len(json_list), "lines")
 
     for json_str in json_list:
         print(json_str)
@@ -89,6 +91,58 @@ def read():
             print("found mention", mention, "parsed", parsed_wp)
 
 
+def analyse():
+    print("Running evaluations for", annotations_file)
+    with annotations_file.open("r", encoding="utf8") as json_file:
+        json_list = list(json_file)
+        print("read", len(json_list), "lines")
+
+    nil_counts = {}
+    sameQ = 0
+    differentQ = 0
+    total = 0
+    articles = set()
+
+    for json_str in json_list:
+        result = json.loads(json_str)
+        article_id = result["article_id"]
+        articles.add(article_id)
+        total += 1
+
+        # assume there is only one span per line
+        assert len(result["spans"]) == 1
+        wp_id = result["spans"][0]["parsed_WP_ID"]
+
+        assert len(result["accept"]) == 1
+        sofie_id = result["accept"][0]
+        answer = result["answer"]
+        # print(article_id, "WP parsed", wp_id, "- Sofie annotated", sofie_id, "with", answer)
+        if answer == "accept":
+            if wp_id.startswith("Q") and sofie_id.startswith("Q"):
+                if wp_id == sofie_id:
+                    sameQ += 1
+                else:
+                    differentQ += 1
+            else:
+                nil_counts[sofie_id] = nil_counts.get(sofie_id, 0) + 1
+        else:
+            print("accept was", answer)
+
+    print()
+    print("Total:", total, "annotations in", len(articles), "articles")
+    print("Found same:", sameQ)
+    print("Found different:", differentQ)
+    print("Found NIL:", nil_counts)
+
+
 if __name__ == "__main__":
-    write()
+    # STEP 0: first write the JSONL from the original training files
+    # write()
+
+    # STEP 1: read the created JSONL to be sure it's OK
     # read()
+
+    # STEP 2: run the actual annotations with the Prodigy recipe "entity_linker.eval"
+
+    # STEP 3: now run the stats on the manual annotations
+    analyse()

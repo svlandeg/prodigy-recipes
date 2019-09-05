@@ -111,7 +111,8 @@ def add_options(stream, kb, id_to_desc):
 
             options.append({"id": "NIL_otherLink", "html": "Link not in options"})
             options.append({"id": "NIL_ambiguous", "html": "Need more context"})
-            options.append({"id": "NIL_notNE", "html": "Not a linkable named entity"})
+            options.append({"id": "NIL_noNE", "html": "Not a linkable named entity"})
+            options.append({"id": "NIL_noSentence", "html": "Unreadable sentence"})
             options.append({"id": "NIL_unsure", "html": "Unsure"})
 
             task["options"] = options
