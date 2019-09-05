@@ -12,16 +12,23 @@ import spacy
 # Recipe decorator with argument annotations: (description, argument type,
 # shortcut, type / converter function called on value before it's passed to
 # the function). Descriptions are also shown when typing --help.
-@prodigy.recipe('entity_linker.match',
+@prodigy.recipe(
+    "entity_linker.match",
     dataset=("The dataset to use", "positional", None, str),
     spacy_model=("The base model", "positional", None, str),
     source=("The source data as a JSONL file", "positional", None, str),
     patterns=("Optional match patterns", "option", "p", str),
     exclude=("Names of datasets to exclude", "option", "e", split_string),
-    resume=("Resume from existing dataset and update matcher accordingly", "flag", "R", bool)
+    resume=(
+        "Resume from existing dataset and update matcher accordingly",
+        "flag",
+        "R",
+        bool,
+    ),
 )
-def entity_linker_match(dataset, spacy_model, source, patterns=None, exclude=None,
-              resume=False):
+def entity_linker_match(
+    dataset, spacy_model, source, patterns=None, exclude=None, resume=False
+):
     """
     Suggest phrases that match a given patterns file, and mark whether they
     are examples of the entity you're interested in. The patterns file can
@@ -50,11 +57,9 @@ def entity_linker_match(dataset, spacy_model, source, patterns=None, exclude=Non
     stream = (eg for score, eg in matcher(stream))
 
     return {
-        'view_id': 'ner',       # Annotation interface to use
-        'dataset': dataset,     # Name of dataset to save annotations
-        'stream': stream,       # Incoming stream of examples
-        'exclude': exclude,     # List of dataset names to exclude
-        'config': {             # Additional config settings, mostly for app UI
-            'lang': nlp.lang
-        }
+        "view_id": "ner",  # Annotation interface to use
+        "dataset": dataset,  # Name of dataset to save annotations
+        "stream": stream,  # Incoming stream of examples
+        "exclude": exclude,  # List of dataset names to exclude
+        "config": {"lang": nlp.lang},  # Additional config settings, mostly for app UI
     }

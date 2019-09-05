@@ -55,7 +55,7 @@ def entity_linker_match_entities(dataset, spacy_model, source, kb_path, label=No
     stream = add_options(stream, kb)  # add options to each task
 
     return {
-        'view_id': 'choice',       # Annotation interface to use
+        'view_id': 'choice',    # Annotation interface to use
         'dataset': dataset,     # Name of dataset to save annotations
         'stream': stream,       # Incoming stream of examples
         'exclude': exclude,     # List of dataset names to exclude
