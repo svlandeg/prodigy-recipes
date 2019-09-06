@@ -114,9 +114,11 @@ def analyse():
     nil_counts = {}
     sameQ = 0
     differentQ = 0
+    ignore = 0
     total = 0
     articles = set()
 
+    print()
     for json_str in json_list:
         result = json.loads(json_str)
         article_id = result["article_id"]
@@ -127,36 +129,45 @@ def analyse():
         assert len(result["spans"]) == 1
         wp_id = result["spans"][0]["parsed_WP_ID"]
 
-        assert len(result["accept"]) == 1
-        sofie_id = result["accept"][0]
-        answer = result["answer"]
-        # print(article_id, "WP parsed", wp_id, "- Sofie annotated", sofie_id, "with", answer)
-        if answer == "accept":
-            if wp_id.startswith("Q") and sofie_id.startswith("Q"):
-                if wp_id == sofie_id:
-                    sameQ += 1
-                else:
-                    differentQ += 1
-            else:
-                nil_counts[sofie_id] = nil_counts.get(sofie_id, 0) + 1
+        # ignoring "ignore" answers with zero length "accept" annotations
+        if len(result["accept"]) == 0:
+            ignore += 1
         else:
-            print("accept was", answer)
+            assert len(result["accept"]) == 1
+            sofie_id = result["accept"][0]
+            answer = result["answer"]
+            # print(article_id, "WP parsed", wp_id, "- Sofie annotated", sofie_id, "with", answer)
+            if answer == "accept":
+                if wp_id.startswith("Q") and sofie_id.startswith("Q"):
+                    if wp_id == sofie_id:
+                        sameQ += 1
+                    else:
+                        text = result["text"]
+                        print("Manually annotated", sofie_id, "but got", wp_id, "from WP for article", article_id, "and text:", text)
+                        differentQ += 1
+                else:
+                    nil_counts[sofie_id] = nil_counts.get(sofie_id, 0) + 1
+            else:
+                print("accept was", answer)
 
     print()
     print("Total:", total, "annotations in", len(articles), "articles")
     print("Found same:", sameQ)
     print("Found different:", differentQ)
-    print("Found NIL:", nil_counts)
+    print("Found ignored:", ignore)
+    print("Found NIL:", sum([y for x,y in nil_counts.items()]))
+    for x, y in nil_counts.items():
+        print(" - " + x + ":", y)
 
 
 if __name__ == "__main__":
     # STEP 0: first write the JSONL from the original training files
-    write(limit=1000)
+    # write(limit=1000)
 
     # STEP 1: read the created JSONL to be sure it's OK
-    read()
+    # read()
 
     # STEP 2: run the actual annotations with the Prodigy recipe "entity_linker.eval"
 
     # STEP 3: now run the stats on the manual annotations
-    # analyse()
+    analyse()

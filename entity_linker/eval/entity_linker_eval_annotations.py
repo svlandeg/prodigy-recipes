@@ -11,6 +11,8 @@ from prodigy.components.loaders import JSONL
 from prodigy.components.db import connect
 from prodigy.util import split_string
 
+from spacy.util import itershuffle
+
 # TODO: get URL from KB instead of hardcoded here
 URL_PREFIX = "https://www.wikidata.org/wiki/"
 
@@ -18,7 +20,6 @@ URL_PREFIX = "https://www.wikidata.org/wiki/"
 # shortcut, type / converter function called on value before it's passed to
 # the function). Descriptions are also shown when typing --help.
 from spacy.kb import KnowledgeBase
-from spacy.vocab import Vocab
 
 
 @prodigy.recipe(
@@ -34,10 +35,6 @@ def entity_linker_eval(dataset, source, kb_dir, exclude=None, resume=False):
     Load a dataset of EL annotations, add additional candidates from the KB,
     and offer each annotation as an evaluation task.
     """
-    # Load the stream from a JSONL file and return a generator that yields a
-    # dictionary for each example in the data.
-    stream = JSONL(source)
-
     # Load the knowledge base
     nlp_dir = kb_dir / "nlp"
 
@@ -66,14 +63,16 @@ def entity_linker_eval(dataset, source, kb_dir, exclude=None, resume=False):
     # dictionary for each example in the data.
     stream = JSONL(source)
 
-    print("stream before:", stream)
-    stream = add_options(stream, kb, id_to_desc)  # add options to each task
-    print("stream after:", stream)
+    # add KB options to each task
+    stream = add_options(stream, kb, id_to_desc)
+
+    # shuffle the stream to mix up the annotations & articles
+    shuffled_stream = itershuffle(stream, bufsize=1000)
 
     return {
         "view_id": "choice",  # Annotation interface to use
         "dataset": dataset,  # Name of dataset to save annotations
-        "stream": stream,  # Incoming stream of examples
+        "stream": shuffled_stream,  # Incoming stream of examples
         "exclude": exclude,  # List of dataset names to exclude
         "config": {"choice_auto_accept": True},  # Additional config settings,
     }
@@ -111,8 +110,8 @@ def add_options(stream, kb, id_to_desc):
 
             options.append({"id": "NIL_otherLink", "html": "Link not in options"})
             options.append({"id": "NIL_ambiguous", "html": "Need more context"})
-            options.append({"id": "NIL_noNE", "html": "Not a linkable named entity"})
-            options.append({"id": "NIL_noSentence", "html": "Unreadable sentence"})
+            options.append({"id": "NIL_noNE", "html": "Not a named entity"})
+            options.append({"id": "NIL_noSentence", "html": "Not a proper sentence"})
             options.append({"id": "NIL_unsure", "html": "Unsure"})
 
             task["options"] = options
