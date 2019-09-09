@@ -8,7 +8,6 @@ from pathlib import Path
 import prodigy
 import spacy
 from prodigy.components.loaders import JSONL
-from prodigy.components.db import connect
 from prodigy.util import split_string
 
 from spacy.util import itershuffle
@@ -28,9 +27,8 @@ from spacy.kb import KnowledgeBase
     source=("The source data as a JSONL file", "positional", None, str),
     kb_dir=("Path to the KB dir", "positional", None, Path),
     exclude=("Names of datasets to exclude", "option", "e", split_string),
-    resume=("Resume from existing dataset", "flag", "R", bool),
 )
-def entity_linker_eval(dataset, source, kb_dir, exclude=None, resume=False):
+def entity_linker_eval(dataset, source, kb_dir, exclude=None):
     """
     Load a dataset of EL annotations, add additional candidates from the KB,
     and offer each annotation as an evaluation task.
@@ -52,13 +50,6 @@ def entity_linker_eval(dataset, source, kb_dir, exclude=None, resume=False):
         for row in csvreader:
             id_to_desc[row[0]] = row[1]
 
-    if resume:
-        # Connect to the database using the settings from prodigy.json
-        DB = connect()
-        if dataset and dataset in DB:
-            # Get the existing annotations
-            existing = DB.get_dataset(dataset)
-
     # Load the stream from a JSONL file and return a generator that yields a
     # dictionary for each example in the data.
     stream = JSONL(source)
@@ -67,7 +58,7 @@ def entity_linker_eval(dataset, source, kb_dir, exclude=None, resume=False):
     stream = add_options(stream, kb, id_to_desc)
 
     # shuffle the stream to mix up the annotations & articles
-    shuffled_stream = itershuffle(stream, bufsize=1000)
+    shuffled_stream = itershuffle(stream, bufsize=5000)
 
     return {
         "view_id": "choice",  # Annotation interface to use
@@ -110,6 +101,7 @@ def add_options(stream, kb, id_to_desc):
 
             options.append({"id": "NIL_otherLink", "html": "Link not in options"})
             options.append({"id": "NIL_ambiguous", "html": "Need more context"})
+            options.append({"id": "NIL_multiple", "html": "Multiple links are possible"})
             options.append({"id": "NIL_noNE", "html": "Not a named entity"})
             options.append({"id": "NIL_noSentence", "html": "Not a proper sentence"})
             options.append({"id": "NIL_unsure", "html": "Unsure"})

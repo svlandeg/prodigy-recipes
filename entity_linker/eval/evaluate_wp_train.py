@@ -14,7 +14,7 @@ kb_dir = "C:/Users/Sofie/Documents/data/spacy_test_CLI_KB/"
 training_dir = Path("C:/Users/Sofie/Documents/data/spacy_test_CLI_train_dataset/")
 output_file = Path("./dev_training.jsonl")
 
-annotations_file = Path("./annotations_eval-wp-3_5sept2019.jsonl")
+annotations_file = Path("./eval_wp_el_output_3.jsonl")
 
 
 def is_dev(article_id):
@@ -127,7 +127,8 @@ def analyse():
 
         # assume there is only one span per line
         assert len(result["spans"]) == 1
-        wp_id = result["spans"][0]["parsed_WP_ID"]
+        span = result["spans"][0]
+        wp_id = span["parsed_WP_ID"]
 
         # ignoring "ignore" answers with zero length "accept" annotations
         if len(result["accept"]) == 0:
@@ -143,7 +144,12 @@ def analyse():
                         sameQ += 1
                     else:
                         text = result["text"]
-                        print("Manually annotated", sofie_id, "but got", wp_id, "from WP for article", article_id, "and text:", text)
+                        start_char = int(span["start"])
+                        end_char = int(span["end"])
+                        mention = text[start_char:end_char]
+
+                        print("Manually annotated", sofie_id, "but got", wp_id,
+                              "for mention", mention, "in article", article_id, "with text:", text)
                         differentQ += 1
                 else:
                     nil_counts[sofie_id] = nil_counts.get(sofie_id, 0) + 1
