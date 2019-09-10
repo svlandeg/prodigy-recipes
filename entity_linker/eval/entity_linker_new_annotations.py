@@ -100,11 +100,11 @@ def add_options(stream, kb, id_to_desc):
             # randomly shuffle the candidates to avoid bias
             random.shuffle(options)
 
-            options.append({"id": "NIL_otherLink", "html": "Link not in options"})
-            options.append({"id": "NIL_ambiguous", "html": "Need more context"})
-            options.append({"id": "NIL_noNE", "html": "Not a named entity"})
-            options.append({"id": "NIL_noSentence", "html": "Not a proper sentence"})
-            options.append({"id": "NIL_unsure", "html": "Unsure"})
+            options.append({"id": "NIL_otherLink", "text": "Link not in options"})
+            options.append({"id": "NIL_ambiguous", "text": "Need more context"})
+            options.append({"id": "NIL_noNE", "text": "Not a named entity"})
+            options.append({"id": "NIL_noSentence", "text": "Not a proper sentence"})
+            options.append({"id": "NIL_unsure", "text": "Unsure"})
 
             task["options"] = options
             yield task
