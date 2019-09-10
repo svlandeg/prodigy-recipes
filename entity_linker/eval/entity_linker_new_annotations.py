@@ -8,9 +8,8 @@ from pathlib import Path
 import prodigy
 import spacy
 from prodigy.components.loaders import JSONL
-from prodigy.components.preprocess import split_sentences
 from prodigy.models.ner import EntityRecognizer
-from prodigy.util import split_string
+from prodigy.util import split_string, set_hashes
 
 # TODO: get URL from KB instead of hardcoded here
 URL_PREFIX = "https://www.wikidata.org/wiki/"
@@ -49,8 +48,8 @@ def entity_linker_eval(dataset, source, kb_dir, label=None, exclude=None):
     # dictionary for each example in the data.
     stream = JSONL(source)
 
-    # Use spaCy to split text into sentences
-    stream = split_sentences(nlp, stream)
+    # we don't need to split sentences anymore, but we do need hashes
+    stream = [set_hashes(eg) for eg in stream]
 
     # Apply the NER to the stream
     # Filter out the scores to only yield the examples for annotations.

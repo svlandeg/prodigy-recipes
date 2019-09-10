@@ -11,7 +11,7 @@ from prodigy.util import write_jsonl
 
 news_dir = Path("C:/Users/Sofie/Documents/data/kaggle_all_the_news/articles1.csv")
 output_file = Path("./news_annotations.jsonl")
-annotations_file = Path("./eval_news_output.jsonl")
+annotations_file = Path("./annotate_news_output_200.jsonl")
 
 
 def write(limit=None):
@@ -21,18 +21,26 @@ def write(limit=None):
     nlp = spacy.load("en_core_web_lg")
 
     # read all 50K articles and select one sentence at random from each
-    df = pd.read_csv(news_dir)
+    df = pd.read_csv(news_dir, encoding="utf-8")
     for index, row in df.iterrows():
         if not limit or cnt_sentences < limit:
             text = row["content"]
             doc = nlp(text)
-            sentences = [sent.text for sent in doc.sents if len(sent.text) > 10]
+            sentences = [sent for sent in doc.sents if len(sent.text) > 10]
             random.shuffle(sentences)
-            sentence = sentences[0]
+            sent = sentences[0]
 
-            text_dicts.append({"article_id": row["id"], "text": sentence})
+            text_dicts.append(
+                {
+                    "article_id": row["id"],
+                    "text": sent.text,
+                    "article_text": text,
+                    "sent_offset": sent.start_char,
+                }
+            )
             cnt_sentences += 1
 
+    print("dict", text_dicts)
     write_jsonl(output_file, text_dicts)
 
     print("Found", cnt_sentences, "sentences")
@@ -56,12 +64,21 @@ def analyse():
     for json_str in json_list:
         result = json.loads(json_str)
         article_id = result["article_id"]
+        sent_text = result["text"]
+        sent_offset = result["sent_offset"]
+        art_text = result["article_text"]
         articles.add(article_id)
         total += 1
 
         # assume there is only one span per line
         assert len(result["spans"]) == 1
         span = result["spans"][0]
+        span_start = span["start"]
+        span_end = span["end"]
+        span_text = span["text"]
+        # print("Mention", span_text, "==",
+        #      sent_text[span_start:span_end], "==",
+        #      art_text[sent_offset+span_start:sent_offset+span_end])
 
         # ignoring "ignore" answers with zero length "accept" annotations
         if len(result["accept"]) == 0:
@@ -90,7 +107,7 @@ def analyse():
 
 if __name__ == "__main__":
     # STEP 1: write the JSONL from the news snippets
-    # write(limit=10)
+    # write(limit=1000)
 
     # STEP 2: run the actual annotations with the Prodigy recipe "entity_linker.annotate"
 
