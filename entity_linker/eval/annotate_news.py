@@ -10,8 +10,8 @@ import spacy
 from prodigy.util import write_jsonl
 
 news_dir = Path("C:/Users/Sofie/Documents/data/kaggle_all_the_news/articles1.csv")
-output_file = Path("./news_annotations.jsonl")
-annotations_file = Path("./annotate_news_output_200.jsonl")
+output_file = Path("./data/news_annotations.jsonl")
+annotations_file = Path("./data/annotate_news_output_200.jsonl")
 
 
 def write(limit=None):
