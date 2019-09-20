@@ -14,6 +14,8 @@ from prodigy.util import split_string, set_hashes
 # TODO: get URL from KB instead of hardcoded here
 URL_PREFIX = "https://www.wikidata.org/wiki/"
 
+NER_LABELS_TO_IGNORE = ['CARDINAL', 'DATE', 'MONEY', 'ORDINAL', 'QUANTITY', 'TIME', 'PERCENT']
+
 # Recipe decorator with argument annotations: (description, argument type,
 # shortcut, type / converter function called on value before it's passed to
 # the function). Descriptions are also shown when typing --help.
@@ -84,29 +86,32 @@ def add_options(stream, kb, id_to_desc):
     for task in stream:
         text = task["text"]
         for span in task["spans"]:
-            start_char = int(span["start"])
-            end_char = int(span["end"])
-            mention = text[start_char:end_char]
+            # excluding numbers and dates which probably need a different approach than the standard entity linking
+            label = span["label"]
+            if label not in NER_LABELS_TO_IGNORE:
+                start_char = int(span["start"])
+                end_char = int(span["end"])
+                mention = text[start_char:end_char]
 
-            # add candidates from the KB and include generic answers
-            candidates = kb.get_candidates(mention)
+                # add candidates from the KB and include generic answers
+                candidates = kb.get_candidates(mention)
 
-            options = []
-            for c in candidates:
-                url = _print_url_option(c.entity_, id_to_desc)
-                options.append({"id": c.entity_, "html": url})
+                options = []
+                for c in candidates:
+                    url = _print_url_option(c.entity_, id_to_desc)
+                    options.append({"id": c.entity_, "html": url})
 
-            # randomly shuffle the candidates to avoid bias
-            random.shuffle(options)
+                # randomly shuffle the candidates to avoid bias
+                random.shuffle(options)
 
-            options.append({"id": "NIL_otherLink", "text": "Link not in options"})
-            options.append({"id": "NIL_ambiguous", "text": "Need more context"})
-            options.append({"id": "NIL_noNE", "text": "Not a named entity"})
-            options.append({"id": "NIL_noSentence", "text": "Not a proper sentence"})
-            options.append({"id": "NIL_unsure", "text": "Unsure"})
+                options.append({"id": "NIL_otherLink", "text": "Link not in options"})
+                options.append({"id": "NIL_ambiguous", "text": "Need more context"})
+                options.append({"id": "NIL_noNE", "text": "Not a named entity"})
+                options.append({"id": "NIL_noSentence", "text": "Not a proper sentence"})
+                options.append({"id": "NIL_unsure", "text": "Unsure"})
 
-            task["options"] = options
-            yield task
+                task["options"] = options
+                yield task
 
 
 def _print_url_option(entity_id, id_to_desc):
