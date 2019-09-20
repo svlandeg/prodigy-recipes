@@ -34,7 +34,6 @@ def entity_linker_eval(dataset, source, exclude=None):
 
     my_html = (
         "{{before_text}}<b><font color='purple'>{{entity}}</font></b>{{after_text}}<br /><br />"
-        #<div style='color:red'>  </div>
         '<input type="text" class="input" placeholder="Type a custom answer..." />'
         '<button onClick="updateFromInput()">Update</button><br />Answer: {{user_text}}'
     )

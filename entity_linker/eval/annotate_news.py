@@ -13,7 +13,7 @@ news_dir = Path("C:/Users/Sofie/Documents/data/kaggle_all_the_news/articles1.csv
 orig_tasks = Path("./data/news_annotations.jsonl")
 annotations_file = Path("./data/annotate_news_output_500.jsonl")
 nil_tasks = Path("./data/nil_annotations.jsonl")
-nil_annotations_file = Path("./data/annotate_news_nil_output_52.jsonl")
+nil_annotations_file = Path("./data/annotate_news_nil_output_150.jsonl")
 
 
 def write(limit=None):
