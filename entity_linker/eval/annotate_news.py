@@ -10,8 +10,10 @@ import spacy
 from prodigy.util import write_jsonl
 
 news_dir = Path("C:/Users/Sofie/Documents/data/kaggle_all_the_news/articles1.csv")
-output_file = Path("./data/news_annotations.jsonl")
-annotations_file = Path("./data/annotate_news_output_350.jsonl")
+orig_tasks = Path("./data/news_annotations.jsonl")
+annotations_file = Path("./data/annotate_news_output_500.jsonl")
+nil_tasks = Path("./data/nil_annotations.jsonl")
+nil_annotations_file = Path("./data/annotate_news_nil_output_52.jsonl")
 
 
 def write(limit=None):
@@ -41,10 +43,10 @@ def write(limit=None):
             cnt_sentences += 1
 
     print("dict", text_dicts)
-    write_jsonl(output_file, text_dicts)
+    write_jsonl(orig_tasks, text_dicts)
 
     print("Found", cnt_sentences, "sentences")
-    print("Wrote to", output_file)
+    print("Wrote to", orig_tasks)
 
 
 def analyse():
@@ -105,6 +107,115 @@ def analyse():
         print(" - " + x + ":", y)
 
 
+def write_full_tasks():
+    """ Rewrite NIL cases to new annotation tasks showing the whole sentence """
+    print("Writing full tasks for", annotations_file, "to", nil_tasks)
+    with annotations_file.open("r", encoding="utf8") as json_file:
+        json_list = list(json_file)
+        print("read", len(json_list), "lines")
+
+    total = 0
+    articles = set()
+    cnt_tasks = 0
+    text_dicts = []
+
+    print()
+    for json_str in json_list:
+        result = json.loads(json_str)
+        article_id = result["article_id"]
+        answer = result["answer"]
+        if answer == "accept":
+            accept = result["accept"]
+            if len(accept) <= 1:
+                # also include empty strings: something went wrong during annotations
+                if not accept or accept[0] in ("NIL_ambiguous", "Link not in options", "NIL_otherLink", "NIL_unsure"):
+                    sent_offset = result["sent_offset"]
+                    spans = result["spans"]
+                    art_text = result["article_text"]
+
+                    if len(spans) == 1:
+                        span_start = spans[0]["start"] + sent_offset
+                        span_end = spans[0]["end"] + sent_offset
+                        spans[0]["start"] = span_start
+                        spans[0]["end"] = span_end
+
+                        before_text = art_text[0:span_start]
+                        entity = art_text[span_start:span_end]
+                        after_text = art_text[span_end:len(art_text)]
+
+                        text_dicts.append(
+                            {
+                                "article_id": article_id,
+                                "before_text": before_text,
+                                "entity": entity,
+                                "after_text": after_text,
+                                "article_text": art_text,
+                                "spans": spans,
+                                "orig_NIL": accept,
+                            }
+                        )
+                        cnt_tasks += 1
+
+    print("dict", text_dicts)
+    write_jsonl(nil_tasks, text_dicts)
+
+    print("Found", cnt_tasks, "tasks")
+    print("Wrote to", nil_tasks)
+
+
+def analyse_nil():
+    # TODO: analyse by label
+    print("Running evaluations for", nil_annotations_file)
+    with nil_annotations_file.open("r", encoding="utf8") as json_file:
+        json_list = list(json_file)
+        print("read", len(json_list), "lines")
+
+    counts_by_previous = {}
+    ignore = 0
+    total = 0
+    articles = set()
+
+    for json_str in json_list:
+        result = json.loads(json_str)
+        article_id = result["article_id"]
+        orig_NIL = result["orig_NIL"]
+        assert len(orig_NIL) <= 1
+        if len(orig_NIL) == 1:
+            orig_NIL = orig_NIL[0]
+        if len(orig_NIL) == 0:
+            orig_NIL = "orig_ignored"
+
+        articles.add(article_id)
+        total += 1
+
+        answer = result["answer"]
+
+        # ignoring "ignore" answers with zero length "accept" annotations
+        if answer != "accept":
+            ignore += 1
+        else:
+            sofie_id = result["user_text"]
+            if sofie_id.startswith("Q"):
+                sofie_id = "Q ID"
+
+            previous_dict = counts_by_previous.get(orig_NIL, dict())
+            previous_count = previous_dict.get(sofie_id, 0)
+            previous_count += 1
+            previous_dict[sofie_id] = previous_count
+            counts_by_previous[orig_NIL] = previous_dict
+
+    print()
+    print("Total:", total, "annotations in", len(articles), "articles")
+    print("Found ignored:", ignore)
+    print()
+
+    for orig, orig_dict in counts_by_previous.items():
+        print("orig", orig)
+        for q, count in orig_dict.items():
+            print("Found", q, "cases:", count)
+        print()
+
+
 if __name__ == "__main__":
     # STEP 1: write the JSONL from the news snippets
     # write(limit=1000)
@@ -112,4 +223,10 @@ if __name__ == "__main__":
     # STEP 2: run the actual annotations with the Prodigy recipe "entity_linker.annotate"
 
     # STEP 3: now run the stats on the manual annotations
-    analyse()
+    # analyse()
+
+    # STEP 4: take the NIL cases and turn into new tasks for "free" annotation (text box)
+    # write_full_tasks()
+
+    # STEP 5: analyse NIL annotations
+    analyse_nil()

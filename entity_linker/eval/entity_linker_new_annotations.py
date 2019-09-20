@@ -10,6 +10,7 @@ import spacy
 from prodigy.components.loaders import JSONL
 from prodigy.models.ner import EntityRecognizer
 from prodigy.util import split_string, set_hashes
+from spacy.kb import KnowledgeBase
 
 # TODO: get URL from KB instead of hardcoded here
 URL_PREFIX = "https://www.wikidata.org/wiki/"
@@ -19,18 +20,16 @@ NER_LABELS_TO_IGNORE = ['CARDINAL', 'DATE', 'MONEY', 'ORDINAL', 'QUANTITY', 'TIM
 # Recipe decorator with argument annotations: (description, argument type,
 # shortcut, type / converter function called on value before it's passed to
 # the function). Descriptions are also shown when typing --help.
-from spacy.kb import KnowledgeBase
 
 
 @prodigy.recipe(
-    "entity_linker.annotate",
+    "entity_linker.annotate_free",
     dataset=("The dataset to use", "positional", None, str),
     source=("The source data as a JSONL file", "positional", None, str),
     kb_dir=("Path to the KB dir", "positional", None, Path),
-    label=("One or more comma-separated labels", "option", "l", split_string),
     exclude=("Names of datasets to exclude", "option", "e", split_string),
 )
-def entity_linker_eval(dataset, source, kb_dir, label=None, exclude=None):
+def entity_linker_eval(dataset, source, kb_dir, exclude=None):
     """
     Load a dataset of sentences, add NER + candidates from the KB,
     and offer each annotation as an evaluation task.
@@ -44,7 +43,7 @@ def entity_linker_eval(dataset, source, kb_dir, label=None, exclude=None):
 
     # Initialize Prodigy's entity recognizer model, which uses beam search to
     # find all possible analyses and outputs (score, example) tuples
-    model = EntityRecognizer(nlp, label=label)
+    model = EntityRecognizer(nlp)
 
     # Load the stream from a JSONL file and return a generator that yields a
     # dictionary for each example in the data.

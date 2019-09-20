@@ -9,7 +9,7 @@ import prodigy
 import spacy
 from prodigy.components.loaders import JSONL
 from prodigy.util import split_string
-
+from spacy.kb import KnowledgeBase
 from spacy.util import itershuffle
 
 # TODO: get URL from KB instead of hardcoded here
@@ -18,7 +18,6 @@ URL_PREFIX = "https://www.wikidata.org/wiki/"
 # Recipe decorator with argument annotations: (description, argument type,
 # shortcut, type / converter function called on value before it's passed to
 # the function). Descriptions are also shown when typing --help.
-from spacy.kb import KnowledgeBase
 
 
 @prodigy.recipe(
