@@ -14,7 +14,7 @@ kb_dir = "C:/Users/Sofie/Documents/data/spacy_test_CLI_KB/"
 training_dir = Path("C:/Users/Sofie/Documents/data/spacy_test_CLI_train_dataset/")
 output_file = Path("./data/dev_training.jsonl")
 
-annotations_file = Path("./data/eval_wp_el_output_3.jsonl")
+annotations_file = Path("./data/eval_wp_el_output_310.jsonl")
 
 
 def is_dev(article_id):
