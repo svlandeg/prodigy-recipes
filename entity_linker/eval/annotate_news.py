@@ -13,7 +13,7 @@ news_dir = Path("C:/Users/Sofie/Documents/data/kaggle_all_the_news/articles1.csv
 orig_tasks = Path("./data/news_annotations.jsonl")
 annotations_file = Path("./data/annotate_news_output_500.jsonl")
 nil_tasks = Path("./data/nil_annotations.jsonl")
-nil_annotations_file = Path("./data/annotate_news_nil_output_150.jsonl")
+nil_annotations_file = Path("./data/annotate_news_nil_output_226.jsonl")
 
 
 def write(limit=None):
@@ -128,7 +128,7 @@ def write_full_tasks():
             accept = result["accept"]
             if len(accept) <= 1:
                 # also include empty strings: something went wrong during annotations
-                if not accept or accept[0] in ("NIL_ambiguous", "Link not in options", "NIL_otherLink", "NIL_unsure"):
+                if not accept or accept[0] in ("NIL_ambiguous", "NIL_otherLink", "NIL_unsure"):
                     sent_offset = result["sent_offset"]
                     spans = result["spans"]
                     art_text = result["article_text"]
