@@ -33,7 +33,7 @@ def entity_linker_eval(dataset, source, kb_dir, exclude=None):
     and offer each annotation as an evaluation task.
     """
     # Load the knowledge base
-    nlp_dir = kb_dir / "nlp"
+    nlp_dir = kb_dir / "nlp_kb"
 
     nlp = spacy.load(nlp_dir)
     kb = KnowledgeBase(vocab=nlp.vocab, entity_vector_length=1)

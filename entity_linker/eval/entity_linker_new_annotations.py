@@ -28,14 +28,15 @@ NER_LABELS_TO_IGNORE = ['CARDINAL', 'DATE', 'MONEY', 'ORDINAL', 'QUANTITY', 'TIM
     source=("The source data as a JSONL file", "positional", None, str),
     kb_dir=("Path to the KB dir", "positional", None, Path),
     exclude=("Names of datasets to exclude", "option", "e", split_string),
+    to_sort=("Sort the answers (default: False)", "option", "s", bool),
 )
-def entity_linker_eval(dataset, source, kb_dir, exclude=None):
+def entity_linker_eval(dataset, source, kb_dir, exclude=None, to_sort=False):
     """
     Load a dataset of sentences, add NER + candidates from the KB,
     and offer each annotation as an evaluation task.
     """
     # Load the knowledge base
-    nlp_dir = kb_dir / "nlp"
+    nlp_dir = kb_dir / "nlp_kb"
 
     nlp = spacy.load(nlp_dir)
     kb = KnowledgeBase(vocab=nlp.vocab, entity_vector_length=1)
@@ -67,18 +68,18 @@ def entity_linker_eval(dataset, source, kb_dir, exclude=None):
             id_to_desc[row[0]] = row[1]
 
     # add KB options to each task
-    stream = add_options(stream, kb, id_to_desc)
+    stream = add_options(stream, kb, id_to_desc, to_sort)
 
     return {
         "view_id": "choice",  # Annotation interface to use
         "dataset": dataset,  # Name of dataset to save annotations
         "stream": stream,  # Incoming stream of examples
         "exclude": exclude,  # List of dataset names to exclude
-        "config": {"choice_auto_accept": True},  # Additional config settings,
+        "config": {"choice_auto_accept": True},  # Additional config settings
     }
 
 
-def add_options(stream, kb, id_to_desc):
+def add_options(stream, kb, id_to_desc, to_sort):
     """Helper function to add options to every task in a stream. It takes the annotated
     span from the EntityRecognizer and adds suitable candidates from the KB as options."""
 
@@ -100,8 +101,12 @@ def add_options(stream, kb, id_to_desc):
                     url = _print_url_option(c.entity_, id_to_desc)
                     options.append({"id": c.entity_, "html": url})
 
-                # randomly shuffle the candidates to avoid bias
-                random.shuffle(options)
+                if to_sort:
+                    # sort the list by ID to ensure quicker annotation
+                    options = sorted(options, key=lambda r: int(r["id"][1:]))
+                else:
+                    # randomly shuffle the candidates to avoid bias
+                    random.shuffle(options)
 
                 options.append({"id": "NIL_otherLink", "text": "Link not in options"})
                 options.append({"id": "NIL_ambiguous", "text": "Need more context"})
