@@ -220,13 +220,14 @@ if __name__ == "__main__":
     # STEP 1: write the JSONL from the news snippets
     # write(limit=1000)
 
-    # STEP 2: run the actual annotations with the Prodigy recipe "entity_linker.annotate"
+    # STEP 2: run the actual annotations with the Prodigy recipe "entity_linker.annotate_free"
 
     # STEP 3: now run the stats on the manual annotations
     # analyse()
 
-    # STEP 4: take the NIL cases and turn into new tasks for "free" annotation (text box)
+    # STEP 4: take the NIL cases and turn into new tasks for further annotation (text box)
     # write_full_tasks()
+    # run the actual annotations with the Prodigy recipe "entity_linker.annotate_nil"
 
     # STEP 5: analyse NIL annotations
     analyse_nil()
