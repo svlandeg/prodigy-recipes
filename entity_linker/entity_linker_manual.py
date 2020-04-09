@@ -2,9 +2,10 @@ import spacy
 from spacy.kb import KnowledgeBase
 
 import prodigy
-from prodigy.components.loaders import TXT
-from prodigy.models.ner import EntityRecognizer
 from prodigy.util import set_hashes
+from prodigy.models.ner import EntityRecognizer
+from prodigy.components.loaders import TXT
+from prodigy.components.filters import filter_duplicates
 
 import csv
 from pathlib import Path
@@ -38,6 +39,7 @@ def entity_linker_manual(dataset, source, nlp_dir, kb_loc, entity_loc):
             id_to_desc[row[0]] = row[2]
 
     stream = _add_options(stream, kb, id_to_desc)
+    stream = filter_duplicates(stream, by_input=True, by_task=False)
 
     return {
         "dataset": dataset,
