@@ -26,17 +26,17 @@ def entity_linker_manual(dataset, source, nlp_dir, kb_loc, entity_loc):
     kb.load_bulk(kb_loc)
     model = EntityRecognizer(nlp)
 
-    # Read the input sentences and apply the NER to it
-    stream = TXT(source)
-    stream = [set_hashes(eg) for eg in stream]
-    stream = (eg for score, eg in model(stream))
-
     # Read entity descriptions for printing a bit more information than just the QID
     id_dict = dict()
     with entity_loc.open("r", encoding="utf8") as csvfile:
         csvreader = csv.reader(csvfile, delimiter=",")
         for row in csvreader:
             id_dict[row[0]] = (row[1], row[2])
+
+    # Read the input sentences and apply the NER to it
+    stream = TXT(source)
+    stream = [set_hashes(eg) for eg in stream]
+    stream = (eg for score, eg in model(stream))
 
     # Create the multiple-choice options and remove duplicates
     stream = _add_options(stream, kb, id_dict)
@@ -78,5 +78,7 @@ def _add_options(stream, kb, id_dict):
 def _print_url(entity_id, id_dict):
     url_prefix = "https://www.wikidata.org/wiki/"
     name, descr = id_dict.get(entity_id)
+    # TODO: to decide
+    # option = "<a href='" + url_prefix + entity_id + "'>" + name + "</a>: " + descr
     option = "<a href='" + url_prefix + entity_id + "'>" + entity_id + "</a>: " + descr
     return option
