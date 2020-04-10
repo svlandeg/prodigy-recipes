@@ -32,13 +32,13 @@ def entity_linker_manual(dataset, source, nlp_dir, kb_loc, entity_loc):
     stream = (eg for score, eg in model(stream))
 
     # Read entity descriptions for printing a bit more information than just the QID
-    id_to_desc = dict()
+    id_dict = dict()
     with entity_loc.open("r", encoding="utf8") as csvfile:
         csvreader = csv.reader(csvfile, delimiter=",")
         for row in csvreader:
-            id_to_desc[row[0]] = row[2]
+            id_dict[row[0]] = (row[1], row[2])
 
-    stream = _add_options(stream, kb, id_to_desc)
+    stream = _add_options(stream, kb, id_dict)
     stream = filter_duplicates(stream, by_input=True, by_task=False)
 
     return {
@@ -49,7 +49,7 @@ def entity_linker_manual(dataset, source, nlp_dir, kb_loc, entity_loc):
     }
 
 
-def _add_options(stream, kb, id_to_desc):
+def _add_options(stream, kb, id_dict):
     # Add the KB options to each task
     for task in stream:
         text = task["text"]
@@ -63,7 +63,7 @@ def _add_options(stream, kb, id_to_desc):
             if candidates:
                 options = []
                 for c in candidates:
-                    url = _print_url_option(c.entity_, id_to_desc)
+                    url = _print_url_option(c.entity_, id_dict)
                     options.append({"id": c.entity_, "html": url})
 
                 # sort the list by ID to ensure quicker annotation
@@ -75,8 +75,10 @@ def _add_options(stream, kb, id_to_desc):
                 yield task
 
 
-def _print_url_option(entity_id, id_to_desc):
+def _print_url_option(entity_id, id_dict):
     url_prefix = "https://www.wikidata.org/wiki/"
-    descr =  id_to_desc.get(entity_id, "No description")
+    name, descr = id_dict.get(entity_id)
+    # TODO: to decide
+    # option = "<a href='" + url_prefix + entity_id + "'>" + name + "</a>: " + descr
     option = "<a href='" + url_prefix + entity_id + "'>" + entity_id + "</a>: " + descr
     return option
