@@ -38,6 +38,7 @@ def entity_linker_manual(dataset, source, nlp_dir, kb_loc, entity_loc):
         for row in csvreader:
             id_dict[row[0]] = (row[1], row[2])
 
+    # Create the multiple-choice options and remove duplicates
     stream = _add_options(stream, kb, id_dict)
     stream = filter_duplicates(stream, by_input=True, by_task=False)
 
@@ -58,16 +59,15 @@ def _add_options(stream, kb, id_dict):
             end_char = int(span["end"])
             mention = text[start_char:end_char]
 
-            # add candidates from the KB and include generic answers
+            # add candidates from the KB
             candidates = kb.get_candidates(mention)
             if candidates:
-                options = []
-                for c in candidates:
-                    url = _print_url_option(c.entity_, id_dict)
-                    options.append({"id": c.entity_, "html": url})
+                options = [{"id": c.entity_, "html": _print_url(c.entity_, id_dict)} for c in candidates]
 
                 # sort the list by ID to ensure quicker annotation
                 options = sorted(options, key=lambda r: int(r["id"][1:]))
+
+                # add few extra options
                 options.append({"id": "NIL_otherLink", "text": "Link not in options"})
                 options.append({"id": "NIL_ambiguous", "text": "Need more context"})
 
@@ -75,10 +75,8 @@ def _add_options(stream, kb, id_dict):
                 yield task
 
 
-def _print_url_option(entity_id, id_dict):
+def _print_url(entity_id, id_dict):
     url_prefix = "https://www.wikidata.org/wiki/"
     name, descr = id_dict.get(entity_id)
-    # TODO: to decide
-    # option = "<a href='" + url_prefix + entity_id + "'>" + name + "</a>: " + descr
     option = "<a href='" + url_prefix + entity_id + "'>" + entity_id + "</a>: " + descr
     return option
