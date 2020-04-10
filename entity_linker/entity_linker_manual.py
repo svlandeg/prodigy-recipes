@@ -77,6 +77,6 @@ def _add_options(stream, kb, id_to_desc):
 
 def _print_url_option(entity_id, id_to_desc):
     url_prefix = "https://www.wikidata.org/wiki/"
-    descr = entity_id + ": " + id_to_desc.get(entity_id, "No description")
-    url = "<a href='" + url_prefix + entity_id + "'>" + descr + "</a>"
-    return url
+    descr =  id_to_desc.get(entity_id, "No description")
+    option = "<a href='" + url_prefix + entity_id + "'>" + entity_id + "</a>: " + descr
+    return option
